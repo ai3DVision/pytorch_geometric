@@ -12,7 +12,7 @@ sys.path.insert(0, '..')
 
 from torch_geometric.datasets import Cora  # noqa
 from torch_geometric.transform import TargetIndegreeAdj  # noqa
-from torch_geometric.nn.modules import SplineConv  # noqa
+from torch_geometric.nn.modules import AttSplineConv  # noqa
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data')
 dataset = Cora(osp.join(path, 'Cora'), transform=TargetIndegreeAdj())
@@ -24,11 +24,12 @@ test_mask = torch.arange(data.num_nodes - 500, data.num_nodes).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = SplineConv(1433, 16, dim=1, kernel_size=2)
-        self.conv2 = SplineConv(16, 7, dim=1, kernel_size=2)
+        self.conv1 = AttSplineConv(1433, 8, dim=1, dropout=0.6, kernel_size=2)
+        self.conv2 = AttSplineConv(8, 7, dim=1, dropout=0.6, kernel_size=2)
 
     def forward(self):
         x, edge_index, pseudo = data.input, data.index, data.weight
+        x = F.dropout(x, training=self.training)
         x = F.elu(self.conv1(x, edge_index, pseudo))
         x = F.dropout(x, training=self.training)
         x = self.conv2(x, edge_index, pseudo)
@@ -61,7 +62,7 @@ for run in range(1, 101):
     model.conv1.reset_parameters()
     model.conv2.reset_parameters()
 
-    for _ in range(200):
+    for _ in range(500):
         train()
 
     acc.append(test(test_mask))

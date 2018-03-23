@@ -7,14 +7,8 @@ from torch.autograd import Variable
 from .graph_conv import add_self_loops
 
 
-def gat(x,
-        edge_index,
-        concat,
-        negative_slope,
-        dropout,
-        weight,
-        att_weight,
-        bias=None):
+def gat(x, edge_index, concat, negative_slope, dropout, weight, att_weight,
+        bias):
 
     if weight.dim() == 2:
         weight = weight.unsqueeze(-2)

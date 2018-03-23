@@ -1,10 +1,10 @@
 import torch
 from torch.nn import Module, Parameter
+from torch_spline_conv import spline_conv
 
 from .utils.inits import uniform
 from .utils.repr import repr
 from .utils.repeat import repeat_to
-from torch_spline_conv import spline_conv
 
 
 class SplineConv(Module):
