@@ -24,8 +24,8 @@ test_mask = torch.arange(data.num_nodes - 500, data.num_nodes).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = AttSplineConv(1433, 8, dim=1, dropout=0.6, kernel_size=2)
-        self.conv2 = AttSplineConv(8, 7, dim=1, dropout=0.6, kernel_size=2)
+        self.conv1 = AttSplineConv(1433, 8, dim=1, kernel_size=2, dropout=0.6)
+        self.conv2 = AttSplineConv(8, 7, dim=1, kernel_size=2, dropout=0.6)
 
     def forward(self):
         x, edge_index, pseudo = data.input, data.index, data.weight
