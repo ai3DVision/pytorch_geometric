@@ -160,18 +160,18 @@ class Data(object):
     def cpu(self, props=None):
         return self._transfer(lambda x: x.cpu(), props)
 
-    def to_variable(self, props=['input', 'target']):
+    def to_variable(self, props=['input', 'weight', 'target']):
         return self._transfer(lambda x: Variable(x), props)
 
-    def to_tensor(self, props=['input', 'target']):
+    def to_tensor(self, props=['input', 'weight', 'target']):
         return self._transfer(lambda x: x.data, props)
 
 
 class Set(Data):
     def __init__(self, input, pos, index, weight, target, faces, slice,
                  index_slice):
-        super(Set, self).__init__(input, pos, index, weight, target,
-                                  faces=faces)
+        super(Set, self).__init__(
+            input, pos, index, weight, target, faces=faces)
         self.slice = slice
         self.index_slice = index_slice
 

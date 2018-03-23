@@ -28,11 +28,10 @@ class Net(nn.Module):
         self.conv2 = SplineConv(16, 7, dim=1, kernel_size=2)
 
     def forward(self):
-        x, adj = data.input, data.adj
+        x, edge_index, pseudo = data.input, data.index, data.weight
+        x = F.elu(self.conv1(x, edge_index, pseudo))
         x = F.dropout(x, training=self.training)
-        x = F.elu(self.conv1(adj, x))
-        x = F.dropout(x, training=self.training)
-        x = self.conv2(adj, x)
+        x = self.conv2(x, edge_index, pseudo)
         return F.log_softmax(x, dim=1)
 
 
