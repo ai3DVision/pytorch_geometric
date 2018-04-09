@@ -15,7 +15,7 @@ sys.path.insert(0, '..')
 from torch_geometric.datasets import ENZYMES  # noqa
 from torch_geometric.transform import TargetIndegreeAdj  # noqa
 from torch_geometric.utils import DataLoader2  # noqa
-from torch_geometric.nn.modules import SplineConv  # noqa
+from torch_geometric.nn.modules import AttSplineConv  # noqa
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'ENZYMES')
 train_dataset = ENZYMES(path, transform=TargetIndegreeAdj())
@@ -30,21 +30,28 @@ test_loader = DataLoader2(test_dataset, batch_size=64)
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = SplineConv(3, 64, dim=1, kernel_size=2)
-        self.conv2 = SplineConv(64, 64, dim=1, kernel_size=2)
-        self.conv3 = SplineConv(64, 64, dim=1, kernel_size=2)
-        self.conv4 = SplineConv(64, 64, dim=1, kernel_size=2)
+        self.conv1 = AttSplineConv(3, 64, dim=1, kernel_size=2, dropout=0.6)
+        self.conv2 = AttSplineConv(64, 64, dim=1, kernel_size=2, dropout=0.6)
+        self.conv3 = AttSplineConv(64, 64, dim=1, kernel_size=2, dropout=0.6)
+        self.conv4 = AttSplineConv(64, 64, dim=1, kernel_size=2, dropout=0.6)
+        self.conv5 = AttSplineConv(64, 64, dim=1, kernel_size=2, dropout=0.6)
+        self.conv6 = AttSplineConv(64, 64, dim=1, kernel_size=2, dropout=0.6)
         self.fc1 = nn.Linear(64, 6)
 
     def forward(self, data):
-        x = F.elu(self.conv1(data.adj, data.input))
-        x = F.elu(self.conv2(data.adj, x))
-        x = F.elu(self.conv3(data.adj, x))
-        x = F.elu(self.conv4(data.adj, x))
+        x, edge_index, pseudo = data.input, data.index, data.weight
+        x = F.dropout(x, training=self.training)
+        x = F.elu(self.conv1(x, edge_index, pseudo))
+        x = F.elu(self.conv2(x, edge_index, pseudo))
+        x = F.elu(self.conv3(x, edge_index, pseudo))
+        x = F.elu(self.conv4(x, edge_index, pseudo))
+        x = F.elu(self.conv5(x, edge_index, pseudo))
+        x = F.elu(self.conv6(x, edge_index, pseudo))
 
         index = Variable(data.batch.unsqueeze(1).expand(x.size()))
         x = scatter_mean(index, x, dim=0)
 
+        x = F.dropout(x, training=self.training)
         x = self.fc1(x)
         return F.log_softmax(x, dim=1)
 
@@ -73,14 +80,14 @@ def test(epoch, dataset, loader, str):
     correct = 0
 
     for data in loader:
-        data = data.cuda().to_variable('input')
+        data = data.cuda().to_variable()
         pred = model(data).data.max(1)[1]
-        correct += pred.eq(data.target).sum()
+        correct += pred.eq(data.target.data).sum()
 
     print('Epoch:', epoch, str, 'Accuracy:', correct / len(dataset))
 
 
 for epoch in range(1, 501):
     train()
-    # test(epoch, train_dataset, train_loader, 'Train')
+    test(epoch, train_dataset, train_loader, 'Train')
     test(epoch, test_dataset, test_loader, 'Test')
